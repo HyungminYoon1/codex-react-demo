@@ -54,10 +54,6 @@
   - commit 예정인 작업을 카드 형태로 표시
 - `Effect JSON`
   - raw effect 데이터를 그대로 확인
-- `Committed Tree`
-  - 현재 기준이 되는 Virtual DOM 트리
-- `Working Tree`
-  - 사용자가 수정 중인 다음 Virtual DOM 트리
 - `Snapshots`
   - commit 단위 이력 이동
 
@@ -101,7 +97,7 @@
 - [`src/playground/actions.js`](./src/playground/actions.js)
   - playground 상태 흐름, commit, history, auto-commit 제어
 - [`src/ui/renderPanels.js`](./src/ui/renderPanels.js)
-  - effect, tree, history 패널 렌더링
+  - effect, history 패널 렌더링
 
 ## Run
 

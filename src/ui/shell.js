@@ -109,26 +109,6 @@ export function getAppShell() {
         <article class="panel">
           <header class="panel-head">
             <div>
-              <p class="panel-kicker">Virtual DOM</p>
-              <h2>Committed Tree</h2>
-            </div>
-          </header>
-          <div class="tree-shell" data-role="committed-tree"></div>
-        </article>
-
-        <article class="panel">
-          <header class="panel-head">
-            <div>
-              <p class="panel-kicker">Virtual DOM</p>
-              <h2>Working Tree</h2>
-            </div>
-          </header>
-          <div class="tree-shell" data-role="working-tree"></div>
-        </article>
-
-        <article class="panel">
-          <header class="panel-head">
-            <div>
               <p class="panel-kicker">History</p>
               <h2>Snapshots</h2>
             </div>
@@ -168,8 +148,6 @@ export function getRefs(container) {
     effectJson: container.querySelector('[data-role="effect-json"]'),
     effectMode: container.querySelector('[data-role="effect-mode"]'),
     effectJsonMeta: container.querySelector('[data-role="effect-json-meta"]'),
-    committedTree: container.querySelector('[data-role="committed-tree"]'),
-    workingTree: container.querySelector('[data-role="working-tree"]'),
     historyList: container.querySelector('[data-role="history-list"]'),
     insertStat: container.querySelector('[data-role="stat-insert"]'),
     removeStat: container.querySelector('[data-role="stat-remove"]'),

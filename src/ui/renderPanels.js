@@ -11,12 +11,11 @@ import {
   describeEffect,
   escapeHtml,
   formatTime,
-  getTreeLabel,
 } from './formatters.js';
 
 // 현재 state를 검사 패널용 HTML 문자열로 바꿔 실제 대시보드 DOM에 주입한다.
 /**
- * 앱 상태를 기준으로 통계, effect 목록, 트리 뷰, 히스토리 UI를 다시 그린다.
+ * 앱 상태를 기준으로 통계, effect 목록, 히스토리 UI를 다시 그린다.
  *
  * @param {object} refs - 패널 DOM 참조 모음.
  * @param {object} state - 현재 playground 상태.
@@ -73,8 +72,6 @@ export function renderPanels(refs, state) {
     ? panelEffects.map(renderEffectCard).join('')
     : getEmptyState('Fiber queue', '현재 표시할 effect가 없습니다.');
   refs.effectJson.textContent = JSON.stringify(panelEffects, null, 2);
-  refs.committedTree.innerHTML = renderTreeNode(committedTree, 0);
-  refs.workingTree.innerHTML = renderTreeNode(state.workingTree, 0);
   refs.historyList.innerHTML = state.historyMeta.map((entry, index) => {
     const activeClass = index === state.historyIndex ? 'history-item is-active' : 'history-item';
 
@@ -106,38 +103,6 @@ function renderEffectCard(effect) {
         ${effect.flagNames.map((flag) => `<span class="flag-chip">${escapeHtml(flag)}</span>`).join('')}
       </div>
     </article>
-  `;
-}
-
-/**
- * vnode 트리를 재귀적으로 접이식 트리 UI로 렌더링한다.
- *
- * @param {object} node - 렌더링할 vnode.
- * @param {number} depth - 현재 트리 깊이.
- * @returns {string} 트리 뷰 마크업 문자열.
- */
-function renderTreeNode(node, depth) {
-  const label = getTreeLabel(node);
-
-  if (!node.children?.length) {
-    return `
-      <div class="tree-leaf">
-        <span class="tree-token is-${node.type}">${escapeHtml(label)}</span>
-      </div>
-    `;
-  }
-
-  const open = depth < 2 ? 'open' : '';
-  const children = node.children.map((child) => renderTreeNode(child, depth + 1)).join('');
-
-  return `
-    <details class="tree-node" ${open}>
-      <summary>
-        <span class="tree-token is-${node.type}">${escapeHtml(label)}</span>
-        <span class="tree-count">${node.children.length} children</span>
-      </summary>
-      <div class="tree-children">${children}</div>
-    </details>
   `;
 }
 

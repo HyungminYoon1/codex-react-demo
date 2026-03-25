@@ -54,27 +54,3 @@ export function describeEffect(effect) {
       return '설명할 수 없는 effect입니다.';
   }
 }
-
-/**
- * 트리 패널에 보여줄 vnode 라벨 문자열을 만든다.
- *
- * @param {object} node - 라벨링할 vnode.
- * @returns {string} root, text, element 중 타입에 맞는 표시 문자열.
- */
-export function getTreeLabel(node) {
-  if (node.type === 'root') {
-    return 'root';
-  }
-
-  if (node.type === 'text') {
-    const normalized = node.value.replace(/\s+/g, ' ').trim();
-    return `"${normalized || '(whitespace)'}"`;
-  }
-
-  const attrs = Object.entries(node.attrs || {})
-    .slice(0, 3)
-    .map(([name, value]) => (value === '' ? name : `${name}="${value}"`))
-    .join(' ');
-
-  return attrs ? `<${node.tag} ${attrs}>` : `<${node.tag}>`;
-}

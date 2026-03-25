@@ -328,7 +328,6 @@ button {
   font-family: "Iowan Old Style", "Palatino Linotype", serif;
 }
 
-.tree-shell,
 .patch-list,
 .history-list,
 .json-viewer {
@@ -336,70 +335,12 @@ button {
   gap: 12px;
 }
 
-.tree-shell {
-  max-height: 520px;
-  overflow: auto;
-}
-
-.tree-node,
-.tree-leaf,
 .patch-item,
 .history-item,
 .empty-state {
   border-radius: var(--radius-md);
   border: 1px solid rgba(24, 33, 43, 0.08);
   background: #f8fafc;
-}
-
-.tree-node {
-  padding: 12px 14px;
-}
-
-.tree-node summary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  cursor: pointer;
-  list-style: none;
-}
-
-.tree-node summary::-webkit-details-marker {
-  display: none;
-}
-
-.tree-children {
-  display: grid;
-  gap: 10px;
-  margin-top: 12px;
-  padding-left: 16px;
-  border-left: 1px solid rgba(24, 33, 43, 0.12);
-}
-
-.tree-token {
-  font-family: "IBM Plex Mono", "SFMono-Regular", monospace;
-  font-size: 0.84rem;
-}
-
-.tree-token.is-root {
-  color: var(--accent-strong);
-}
-
-.tree-token.is-element {
-  color: var(--teal);
-}
-
-.tree-token.is-text {
-  color: #6f6578;
-}
-
-.tree-count {
-  color: var(--muted);
-  font-size: 0.78rem;
-}
-
-.tree-leaf {
-  padding: 10px 14px;
 }
 
 .patch-item,
