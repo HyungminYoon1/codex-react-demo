@@ -1,3 +1,4 @@
+// playground 시작 시 actual DOM에 주입할 기본 샘플 마크업이다.
 export const SAMPLE_MARKUP = `
 <section class="demo-card" data-key="dashboard">
   <header class="hero-block">
@@ -33,7 +34,7 @@ export const SAMPLE_MARKUP = `
   </div>
 
   <footer class="demo-footer">
-    <button type="button" class="ghost-action">Sample Button</button>
+    <button type="button" class="ghost-action" data-role="sample-button" data-count="0">Sample Button 0</button>
     <small>리스트 순서를 바꾸거나 새로운 태그를 추가해 Patch를 눌러보세요.</small>
   </footer>
 </section>

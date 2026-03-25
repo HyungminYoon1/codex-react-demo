@@ -4,10 +4,23 @@ const timeFormatter = new Intl.DateTimeFormat('ko-KR', {
   second: '2-digit',
 });
 
+// effect 카드, 히스토리, mutation 피드에 들어갈 텍스트 표현을 모아둔 포매터 모듈이다.
+/**
+ * timestamp를 한국어 시각 문자열로 포맷한다.
+ *
+ * @param {number} timestamp - `Date.now()` 기준 밀리초 값.
+ * @returns {string} 화면 표시용 시각 문자열.
+ */
 export function formatTime(timestamp) {
   return timeFormatter.format(timestamp);
 }
 
+/**
+ * 사용자 입력이나 DOM 텍스트를 HTML에 안전하게 삽입할 수 있도록 이스케이프한다.
+ *
+ * @param {unknown} value - 문자열로 변환해 출력할 값.
+ * @returns {string} 이스케이프된 HTML 안전 문자열.
+ */
 export function escapeHtml(value) {
   return String(value)
     .replaceAll('&', '&amp;')
@@ -16,6 +29,12 @@ export function escapeHtml(value) {
     .replaceAll('"', '&quot;');
 }
 
+/**
+ * fiber effect 객체를 카드 설명 문장으로 바꾼다.
+ *
+ * @param {object} effect - 설명할 effect 객체.
+ * @returns {string} 사용자에게 보여줄 한 줄 설명.
+ */
 export function describeEffect(effect) {
   switch (effect.opType) {
     case 'INSERT_CHILD':
@@ -36,6 +55,12 @@ export function describeEffect(effect) {
   }
 }
 
+/**
+ * MutationObserver 레코드를 사람이 읽기 쉬운 로그 문장으로 바꾼다.
+ *
+ * @param {MutationRecord} record - 브라우저가 전달한 mutation 레코드.
+ * @returns {string} 로그 패널에 보여줄 설명 문자열.
+ */
 export function describeMutation(record) {
   if (record.type === 'attributes') {
     return `${record.attributeName} 속성이 변경되었습니다.`;
@@ -48,6 +73,12 @@ export function describeMutation(record) {
   return `자식 노드 ${record.addedNodes.length}개 추가, ${record.removedNodes.length}개 제거`;
 }
 
+/**
+ * 트리 패널에 보여줄 vnode 라벨 문자열을 만든다.
+ *
+ * @param {object} node - 라벨링할 vnode.
+ * @returns {string} root, text, element 중 타입에 맞는 표시 문자열.
+ */
 export function getTreeLabel(node) {
   if (node.type === 'root') {
     return 'root';

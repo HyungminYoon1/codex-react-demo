@@ -1,3 +1,9 @@
+// 앱의 정적 레이아웃 HTML과 각 패널 DOM 참조 수집 함수를 제공한다.
+/**
+ * playground 전체 UI 뼈대를 문자열 템플릿으로 반환한다.
+ *
+ * @returns {string} 루트 컨테이너에 주입할 앱 셸 마크업.
+ */
 export function getAppShell() {
   return `
     <main class="app-shell">
@@ -54,15 +60,25 @@ export function getAppShell() {
               <p class="panel-kicker">테스트 영역</p>
               <h2>Editor + Preview</h2>
             </div>
-            <div class="mini-chip-row" data-role="test-stats"></div>
+            <div class="editor-head-actions">
+              <div class="mini-chip-row" data-role="test-stats"></div>
+              <div class="segmented-toggle" role="tablist" aria-label="Editor mode">
+                <button type="button" class="mode-button is-active" data-role="editor-mode-button" data-mode="html">HTML</button>
+                <button type="button" class="mode-button" data-role="editor-mode-button" data-mode="vdom">VDOM</button>
+              </div>
+            </div>
           </header>
           <div class="test-stack">
             <div class="dom-canvas is-test">
               <div class="dom-canvas-body" data-role="test-preview"></div>
             </div>
-            <label class="editor-shell">
+            <label class="editor-shell" data-role="html-editor-shell">
               <span>샘플 HTML 코드</span>
               <textarea spellcheck="false" data-role="html-editor"></textarea>
+            </label>
+            <label class="editor-shell is-hidden" data-role="vdom-editor-shell">
+              <span>가상 DOM(JSON)</span>
+              <textarea spellcheck="false" data-role="vdom-editor"></textarea>
             </label>
           </div>
         </article>
@@ -146,11 +162,21 @@ export function getAppShell() {
   `;
 }
 
+/**
+ * 셸 안에서 자주 접근하는 DOM 노드들을 data-role 기준으로 모아 반환한다.
+ *
+ * @param {Element} container - 앱 셸이 이미 주입된 루트 컨테이너.
+ * @returns {object} 렌더링과 이벤트 바인딩에 사용할 DOM 참조 모음.
+ */
 export function getRefs(container) {
   return {
     actual: container.querySelector('[data-role="actual-dom"]'),
     testPreview: container.querySelector('[data-role="test-preview"]'),
     editor: container.querySelector('[data-role="html-editor"]'),
+    vdomEditor: container.querySelector('[data-role="vdom-editor"]'),
+    htmlEditorShell: container.querySelector('[data-role="html-editor-shell"]'),
+    vdomEditorShell: container.querySelector('[data-role="vdom-editor-shell"]'),
+    editorModeButtons: Array.from(container.querySelectorAll('[data-role="editor-mode-button"]')),
     patchButton: container.querySelector('[data-role="patch-button"]'),
     autoCommitToggle: container.querySelector('[data-role="auto-commit-toggle"]'),
     undoButton: container.querySelector('[data-role="undo-button"]'),

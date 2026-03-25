@@ -14,6 +14,14 @@ import {
   getTreeLabel,
 } from './formatters.js';
 
+// 현재 state를 검사 패널용 HTML 문자열로 바꿔 실제 대시보드 DOM에 주입한다.
+/**
+ * 앱 상태를 기준으로 통계, effect 목록, 트리 뷰, 히스토리 UI를 다시 그린다.
+ *
+ * @param {object} refs - 패널 DOM 참조 모음.
+ * @param {object} state - 현재 playground 상태.
+ * @returns {void}
+ */
 export function renderPanels(refs, state) {
   const committedTree = state.history[state.historyIndex] || createRootVNode([]);
   const pendingWork = state.parseError
@@ -34,6 +42,13 @@ export function renderPanels(refs, state) {
   refs.undoButton.disabled = state.historyIndex === 0;
   refs.redoButton.disabled = state.historyIndex === state.history.length - 1;
   refs.editor.classList.toggle('has-error', Boolean(state.parseError));
+  refs.vdomEditor.classList.toggle('has-error', Boolean(state.parseError));
+  refs.htmlEditorShell.classList.toggle('is-hidden', state.editorMode !== 'html');
+  refs.vdomEditorShell.classList.toggle('is-hidden', state.editorMode !== 'vdom');
+  refs.editorModeButtons.forEach((button) => {
+    button.classList.toggle('is-active', button.dataset.mode === state.editorMode);
+    button.setAttribute('aria-pressed', String(button.dataset.mode === state.editorMode));
+  });
   refs.status.textContent = state.parseError || state.statusMessage;
   refs.actualStats.innerHTML = `
     <span>${committedStats.totalNodes} nodes</span>
@@ -81,6 +96,12 @@ export function renderPanels(refs, state) {
     : getEmptyState('Mutation log', 'Commit 또는 History 이동 후 실제 DOM 변경 기록이 여기에 쌓입니다.');
 }
 
+/**
+ * effect 객체 하나를 카드 UI 조각으로 렌더링한다.
+ *
+ * @param {object} effect - 화면에 표시할 effect.
+ * @returns {string} 카드 마크업 문자열.
+ */
 function renderEffectCard(effect) {
   return `
     <article class="patch-item">
@@ -96,6 +117,13 @@ function renderEffectCard(effect) {
   `;
 }
 
+/**
+ * vnode 트리를 재귀적으로 접이식 트리 UI로 렌더링한다.
+ *
+ * @param {object} node - 렌더링할 vnode.
+ * @param {number} depth - 현재 트리 깊이.
+ * @returns {string} 트리 뷰 마크업 문자열.
+ */
 function renderTreeNode(node, depth) {
   const label = getTreeLabel(node);
 
@@ -121,6 +149,13 @@ function renderTreeNode(node, depth) {
   `;
 }
 
+/**
+ * 데이터가 없을 때 패널 안에 보여줄 공통 empty state 마크업을 만든다.
+ *
+ * @param {string} title - empty state 제목.
+ * @param {string} description - 보조 설명.
+ * @returns {string} empty state 마크업 문자열.
+ */
 function getEmptyState(title, description) {
   return `
     <div class="empty-state">

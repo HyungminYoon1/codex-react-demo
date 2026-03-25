@@ -237,6 +237,12 @@ button {
   margin-bottom: 16px;
 }
 
+.editor-head-actions {
+  display: grid;
+  gap: 10px;
+  justify-items: end;
+}
+
 .panel-head h2 {
   font-size: 2rem;
 }
@@ -264,9 +270,35 @@ button {
   gap: 16px;
 }
 
+.segmented-toggle {
+  display: inline-flex;
+  padding: 4px;
+  border-radius: 999px;
+  border: 1px solid rgba(33, 24, 14, 0.12);
+  background: rgba(255, 255, 255, 0.86);
+}
+
+.mode-button {
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.mode-button.is-active {
+  background: linear-gradient(135deg, var(--accent), #ff9259);
+  color: white;
+}
+
 .editor-shell {
   display: grid;
   gap: 10px;
+}
+
+.editor-shell.is-hidden {
+  display: none;
 }
 
 .editor-shell span {
@@ -630,6 +662,10 @@ button {
   .demo-footer {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .editor-head-actions {
+    justify-items: stretch;
   }
 
   .status-pill {

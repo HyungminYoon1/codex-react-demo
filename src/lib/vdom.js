@@ -32,6 +32,13 @@ const VOID_TAGS = new Set([
 
 const PRESERVE_WHITESPACE_TAGS = new Set(['code', 'pre', 'textarea']);
 
+// 브라우저 DOM과 내부 virtual DOM 표현 사이를 오가며 파싱, 복제, 렌더링, 직렬화를 담당한다.
+/**
+ * 여러 최상위 노드를 감싸는 내부 루트 vnode를 만든다.
+ *
+ * @param {object[]} [children=[]] - 루트 아래에 둘 자식 vnode 목록.
+ * @returns {{type: string, children: object[]}} 내부 루트 vnode.
+ */
 export function createRootVNode(children = []) {
   return {
     type: 'root',
@@ -39,6 +46,12 @@ export function createRootVNode(children = []) {
   };
 }
 
+/**
+ * vnode 트리를 깊은 복제로 복사해 후속 변경이 원본 스냅샷을 오염시키지 않게 한다.
+ *
+ * @param {object | null} node - 복제할 vnode.
+ * @returns {object | null} 새로 복제한 vnode 또는 `null`.
+ */
 export function cloneVNode(node) {
   if (!node) {
     return null;
@@ -59,12 +72,36 @@ export function cloneVNode(node) {
   };
 }
 
+/**
+ * HTML 문자열을 브라우저 파서로 읽어 내부 vnode 트리로 변환한다.
+ *
+ * @param {string} html - 파싱할 HTML 문자열.
+ * @param {Document} [doc=document] - template 생성에 사용할 문서 객체.
+ * @returns {object} 루트 vnode 트리.
+ */
 export function parseHtmlToVNode(html, doc = document) {
   const template = doc.createElement('template');
   template.innerHTML = html;
   return domNodeToVNode(template.content);
 }
 
+/**
+ * JSON 문자열로 작성된 vnode 트리를 읽고 내부 표준 형태로 정규화한다.
+ *
+ * @param {string} raw - 파싱할 JSON 문자열.
+ * @returns {object} 검증과 정규화를 마친 루트 vnode 트리.
+ */
+export function parseVdomTextToVNode(raw) {
+  const parsed = JSON.parse(raw);
+  return normalizeVNode(parsed, ['root']);
+}
+
+/**
+ * DOM 노드 하나를 대응되는 vnode로 바꾼다.
+ *
+ * @param {Node | null} node - 변환할 DOM 노드.
+ * @returns {object | null} 변환된 vnode 또는 무시 대상이면 `null`.
+ */
 export function domNodeToVNode(node) {
   if (!node) {
     return null;
@@ -89,6 +126,12 @@ export function domNodeToVNode(node) {
   return null;
 }
 
+/**
+ * 컨테이너의 현재 자식 DOM 전체를 루트 vnode 트리로 읽어온다.
+ *
+ * @param {Element} container - 스냅샷을 뜰 실제 DOM 컨테이너.
+ * @returns {object} 루트 vnode 트리.
+ */
 export function domNodeToVNodeTree(container) {
   return createRootVNode(
     Array.from(container.childNodes)
@@ -97,6 +140,7 @@ export function domNodeToVNodeTree(container) {
   );
 }
 
+// 공백만 있는 텍스트는 보존이 필요한 태그가 아니면 vnode에서 제거한다.
 function textToVNode(node) {
   const value = node.textContent ?? '';
   const parentTag = node.parentElement?.tagName?.toLowerCase();
@@ -111,6 +155,7 @@ function textToVNode(node) {
   };
 }
 
+// 위험하거나 의미 없는 태그는 제외하고, element 노드를 재귀적인 vnode로 바꾼다.
 function elementToVNode(element) {
   const tag = element.tagName.toLowerCase();
 
@@ -139,6 +184,7 @@ function elementToVNode(element) {
   };
 }
 
+// form control처럼 속성과 실제 상태가 어긋날 수 있는 요소는 브라우저 상태를 우선해 읽는다.
 function readElementAttributes(element, tag) {
   const attrs = {};
 
@@ -177,6 +223,12 @@ function readElementAttributes(element, tag) {
   return attrs;
 }
 
+/**
+ * keyed diff에 사용할 안정적인 식별자를 vnode에서 읽는다.
+ *
+ * @param {object | null} node - 검사할 vnode.
+ * @returns {string | null} `data-key`, `id` 중 하나 또는 `null`.
+ */
 export function getVNodeKey(node) {
   if (!node || node.type !== 'element') {
     return null;
@@ -185,6 +237,13 @@ export function getVNodeKey(node) {
   return node.attrs?.['data-key'] || node.attrs?.id || null;
 }
 
+/**
+ * vnode 트리를 실제 DOM 노드로 렌더링한다.
+ *
+ * @param {object} node - 렌더링할 vnode.
+ * @param {Document} [doc=document] - DOM 생성에 사용할 문서 객체.
+ * @returns {Node} 렌더된 DOM 노드 또는 fragment.
+ */
 export function renderVNode(node, doc = document) {
   if (node.type === 'root') {
     const fragment = doc.createDocumentFragment();
@@ -218,12 +277,27 @@ export function renderVNode(node, doc = document) {
   return element;
 }
 
+/**
+ * 컨테이너 내용을 vnode 기준으로 통째로 다시 그린다.
+ *
+ * @param {Element} container - 교체 대상 DOM 컨테이너.
+ * @param {object} node - 렌더링할 vnode 트리.
+ * @returns {void}
+ */
 export function mountVNode(container, node) {
   const doc = container.ownerDocument || document;
   const rendered = renderVNode(node, doc);
   container.replaceChildren(rendered);
 }
 
+/**
+ * vnode 속성 값을 실제 DOM 속성으로 반영한다.
+ *
+ * @param {Element} element - 값을 쓸 DOM 요소.
+ * @param {string} name - 속성 이름.
+ * @param {string} value - 설정할 속성 값.
+ * @returns {void}
+ */
 export function setDomAttribute(element, name, value) {
   if (name === 'checked') {
     element.checked = true;
@@ -243,6 +317,13 @@ export function setDomAttribute(element, name, value) {
   element.setAttribute(name, value ?? '');
 }
 
+/**
+ * DOM 요소에서 속성을 제거하고, 동기화가 필요한 프로퍼티도 함께 초기화한다.
+ *
+ * @param {Element} element - 속성을 제거할 DOM 요소.
+ * @param {string} name - 제거할 속성 이름.
+ * @returns {void}
+ */
 export function removeDomAttribute(element, name) {
   if (name === 'checked') {
     element.checked = false;
@@ -255,6 +336,12 @@ export function removeDomAttribute(element, name) {
   element.removeAttribute(name);
 }
 
+/**
+ * vnode 트리를 사람이 읽고 수정할 수 있는 HTML 문자열로 직렬화한다.
+ *
+ * @param {object} node - 직렬화할 vnode.
+ * @returns {string} 들여쓰기가 적용된 HTML 문자열.
+ */
 export function serializeVNodeToHtml(node) {
   if (node.type === 'root') {
     return node.children.map((child) => serializeNode(child, 0)).join('\n');
@@ -263,6 +350,17 @@ export function serializeVNodeToHtml(node) {
   return serializeNode(node, 0);
 }
 
+/**
+ * vnode 트리를 textarea 편집용 JSON 문자열로 직렬화한다.
+ *
+ * @param {object} node - 직렬화할 vnode.
+ * @returns {string} 사람이 수정하기 쉬운 들여쓰기 JSON 문자열.
+ */
+export function serializeVNodeToText(node) {
+  return JSON.stringify(node, null, 2);
+}
+
+// 텍스트 한 줄짜리 노드는 압축하고, 그 외에는 들여쓰기를 유지해 보기 좋은 HTML로 만든다.
 function serializeNode(node, depth) {
   if (node.type === 'text') {
     return `${indent(depth)}${escapeText(node.value)}`;
@@ -307,10 +405,12 @@ function serializeNode(node, depth) {
   return `${indent(depth)}${openTag}\n${children}\n${indent(depth)}</${node.tag}>`;
 }
 
+// 직렬화된 HTML 들여쓰기는 2칸 기준을 사용한다.
 function indent(depth) {
   return '  '.repeat(depth);
 }
 
+// 텍스트 노드에 들어가면 안 되는 최소한의 문자만 이스케이프한다.
 function escapeText(text) {
   return String(text)
     .replaceAll('&', '&amp;')
@@ -318,10 +418,17 @@ function escapeText(text) {
     .replaceAll('>', '&gt;');
 }
 
+// 속성 값은 텍스트 이스케이프에 더해 큰따옴표도 안전하게 처리한다.
 function escapeAttribute(text) {
   return escapeText(text).replaceAll('"', '&quot;');
 }
 
+/**
+ * vnode 트리를 순회하며 노드 수, 깊이, keyed element 수를 집계한다.
+ *
+ * @param {object} tree - 통계를 계산할 루트 vnode.
+ * @returns {{totalNodes: number, elements: number, textNodes: number, keyedElements: number, maxDepth: number}} 트리 통계값.
+ */
 export function countVNodeStats(tree) {
   const stats = {
     totalNodes: 0,
@@ -355,6 +462,7 @@ export function countVNodeStats(tree) {
   return stats;
 }
 
+// 공통 순회 유틸로, 여러 통계 계산이 같은 트리 순회 로직을 재사용하게 한다.
 function walkTree(node, depth, visit) {
   visit(node, depth);
 
@@ -365,4 +473,85 @@ function walkTree(node, depth, visit) {
   for (const child of node.children) {
     walkTree(child, depth + 1, visit);
   }
+}
+
+function normalizeVNode(node, path) {
+  if (!node || typeof node !== 'object' || Array.isArray(node)) {
+    throw new Error(`${path.join('.')}는 vnode 객체여야 합니다.`);
+  }
+
+  if (node.type === 'root') {
+    return {
+      type: 'root',
+      children: normalizeChildren(node.children, [...path, 'children']),
+    };
+  }
+
+  if (node.type === 'text') {
+    if (typeof node.value !== 'string') {
+      throw new Error(`${path.join('.')}의 text.value는 문자열이어야 합니다.`);
+    }
+
+    return {
+      type: 'text',
+      value: node.value,
+    };
+  }
+
+  if (node.type === 'element') {
+    if (typeof node.tag !== 'string' || !node.tag.trim()) {
+      throw new Error(`${path.join('.')}의 element.tag는 비어 있지 않은 문자열이어야 합니다.`);
+    }
+
+    if (node.attrs !== undefined && (typeof node.attrs !== 'object' || node.attrs === null || Array.isArray(node.attrs))) {
+      throw new Error(`${path.join('.')}의 element.attrs는 객체여야 합니다.`);
+    }
+
+    const attrs = normalizeAttrs(node.attrs || {}, [...path, 'attrs']);
+    const tag = node.tag.toLowerCase();
+
+    if (tag === 'textarea') {
+      return {
+        type: 'element',
+        tag,
+        attrs,
+        children: [],
+      };
+    }
+
+    return {
+      type: 'element',
+      tag,
+      attrs,
+      children: normalizeChildren(node.children, [...path, 'children']),
+    };
+  }
+
+  throw new Error(`${path.join('.')}의 type은 root, element, text 중 하나여야 합니다.`);
+}
+
+function normalizeChildren(children, path) {
+  if (children === undefined) {
+    return [];
+  }
+
+  if (!Array.isArray(children)) {
+    throw new Error(`${path.join('.')}는 배열이어야 합니다.`);
+  }
+
+  return children.map((child, index) => normalizeVNode(child, [...path, String(index)]));
+}
+
+function normalizeAttrs(attrs, path) {
+  const normalized = {};
+
+  for (const [key, value] of Object.entries(attrs)) {
+    if (typeof value !== 'string') {
+      throw new Error(`${path.join('.')}의 "${key}" 값은 문자열이어야 합니다.`);
+    }
+
+    normalized[key] = value;
+  }
+
+  return normalized;
 }
