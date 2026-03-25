@@ -1,0 +1,131 @@
+import {
+  formatFiberPath,
+  reconcileTrees,
+  summarizeCommitOperations,
+} from '../lib/fiber.js';
+import {
+  countVNodeStats,
+  createRootVNode,
+} from '../lib/vdom.js';
+import {
+  describeEffect,
+  escapeHtml,
+  formatTime,
+  getTreeLabel,
+} from './formatters.js';
+
+export function renderPanels(refs, state) {
+  const committedTree = state.history[state.historyIndex] || createRootVNode([]);
+  const pendingWork = state.parseError
+    ? { effects: [] }
+    : reconcileTrees(committedTree, state.workingTree);
+  const panelEffects = pendingWork.effects.length
+    ? pendingWork.effects
+    : state.lastCommitEffects;
+  const panelMode = pendingWork.effects.length
+    ? '대기 중 Fiber Work'
+    : '마지막 Commit 기록';
+  const committedStats = countVNodeStats(committedTree);
+  const workingStats = countVNodeStats(state.workingTree);
+  const operationSummary = summarizeCommitOperations(pendingWork.effects);
+
+  refs.patchButton.disabled = !state.history.length || Boolean(state.parseError);
+  refs.autoCommitToggle.checked = state.autoCommitEnabled;
+  refs.undoButton.disabled = state.historyIndex === 0;
+  refs.redoButton.disabled = state.historyIndex === state.history.length - 1;
+  refs.editor.classList.toggle('has-error', Boolean(state.parseError));
+  refs.status.textContent = state.parseError || state.statusMessage;
+  refs.actualStats.innerHTML = `
+    <span>${committedStats.totalNodes} nodes</span>
+    <span>${committedStats.maxDepth} depth</span>
+    <span>${state.historyIndex + 1}/${state.history.length || 1} history</span>
+  `;
+  refs.testStats.innerHTML = `
+    <span>${workingStats.totalNodes} nodes</span>
+    <span>${pendingWork.effects.length} pending effects</span>
+    <span>${state.parseError ? 'parse error' : 'preview synced'}</span>
+  `;
+  refs.pendingStats.textContent = pendingWork.effects.length;
+  refs.effectMode.textContent = panelMode;
+  refs.effectJsonMeta.textContent = `${panelEffects.length} effect objects`;
+  refs.insertStat.textContent = operationSummary.insert;
+  refs.removeStat.textContent = operationSummary.remove;
+  refs.moveStat.textContent = operationSummary.move;
+  refs.attrStat.textContent = operationSummary.attribute;
+  refs.textStat.textContent = operationSummary.text;
+
+  refs.effectCards.innerHTML = panelEffects.length
+    ? panelEffects.map(renderEffectCard).join('')
+    : getEmptyState('Fiber queue', '현재 표시할 effect가 없습니다.');
+  refs.effectJson.textContent = JSON.stringify(panelEffects, null, 2);
+  refs.committedTree.innerHTML = renderTreeNode(committedTree, 0);
+  refs.workingTree.innerHTML = renderTreeNode(state.workingTree, 0);
+  refs.historyList.innerHTML = state.historyMeta.map((entry, index) => {
+    const activeClass = index === state.historyIndex ? 'history-item is-active' : 'history-item';
+
+    return `
+      <button type="button" class="${activeClass}" data-history-index="${index}">
+        <strong>#${index}</strong>
+        <span>${escapeHtml(entry.label)}</span>
+        <small>${entry.effectCount} effects · ${formatTime(entry.timestamp)}</small>
+      </button>
+    `;
+  }).join('');
+  refs.mutationFeed.innerHTML = state.mutationFeed.length
+    ? state.mutationFeed.map((entry) => `
+        <div class="mutation-item">
+          <strong>${formatTime(entry.time)}</strong>
+          <span>${escapeHtml(entry.text)}</span>
+        </div>
+      `).join('')
+    : getEmptyState('Mutation log', 'Commit 또는 History 이동 후 실제 DOM 변경 기록이 여기에 쌓입니다.');
+}
+
+function renderEffectCard(effect) {
+  return `
+    <article class="patch-item">
+      <div class="patch-head">
+        <span class="patch-type">${escapeHtml(effect.opType)}</span>
+        <span class="patch-path">${escapeHtml(formatFiberPath(effect.path || effect.parentPath || []))}</span>
+      </div>
+      <p>${escapeHtml(describeEffect(effect))}</p>
+      <div class="flag-chip-row">
+        ${effect.flagNames.map((flag) => `<span class="flag-chip">${escapeHtml(flag)}</span>`).join('')}
+      </div>
+    </article>
+  `;
+}
+
+function renderTreeNode(node, depth) {
+  const label = getTreeLabel(node);
+
+  if (!node.children?.length) {
+    return `
+      <div class="tree-leaf">
+        <span class="tree-token is-${node.type}">${escapeHtml(label)}</span>
+      </div>
+    `;
+  }
+
+  const open = depth < 2 ? 'open' : '';
+  const children = node.children.map((child) => renderTreeNode(child, depth + 1)).join('');
+
+  return `
+    <details class="tree-node" ${open}>
+      <summary>
+        <span class="tree-token is-${node.type}">${escapeHtml(label)}</span>
+        <span class="tree-count">${node.children.length} children</span>
+      </summary>
+      <div class="tree-children">${children}</div>
+    </details>
+  `;
+}
+
+function getEmptyState(title, description) {
+  return `
+    <div class="empty-state">
+      <strong>${escapeHtml(title)}</strong>
+      <p>${escapeHtml(description)}</p>
+    </div>
+  `;
+}
