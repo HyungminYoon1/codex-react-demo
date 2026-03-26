@@ -4,6 +4,8 @@
 
 이 프로젝트는 단순히 결과 화면을 렌더링하는 데서 끝나지 않고, `parse/read -> reconcile -> effects -> commit` 흐름과 `history snapshot`, `auto commit`, `HTML/VDOM 양방향 편집`까지 한 번에 확인할 수 있도록 구성되어 있습니다.
 
+Virtual DOM이 필요한 이유는 변경 전후 상태를 메모리상의 트리로 다뤄 실제 DOM을 매번 통째로 다시 만지지 않고도 차이를 계산할 수 있게 해주기 때문입니다. Diff 알고리즘은 그 차이 중 꼭 필요한 변경만 추려 적용해서 불필요한 DOM 조작 비용을 줄이고, 어떤 변경이 왜 발생했는지 더 명확하게 추적할 수 있게 해줍니다.
+
 ## Architecture At A Glance
 
 ```mermaid
